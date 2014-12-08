@@ -30,3 +30,13 @@ Testing
 >>> require 'gdbm'
 => true
 ```
+
+Build Notes
+-----------
+
+The built-on-cedar-14 binaries that are downloaded by this buildpack, and live on s3, were created by the following, more or less:
+
+* create a dummy cedar-14 heroku app and run bash on it with `heroku run bash`
+* `wget gdbm.tgz ; tar -zxf gdbm.tgz ; cd gdbm`
+* `./configure --prefix=/app/vendor/gdbm/1.11 ; make ; make install`
+* `cd /app/vendor/gdbm/1.11 ; tar -czf ~/gdbm-1.11.tgz bin lib include`
