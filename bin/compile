@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+# bin/compile <build-dir> <cache-dir>
+
+# Fail fast
+set -e
+
+# Debug
+# set -x
+
+# Clean up leaking environment
+unset GIT_DIR
+
+# Configuration
+S3_BUCKET=${HEROKU_GDBM_BUILDBACK_S3_BUCKET:-"stateandplain-gdbm-buildpack"}
+
+# Parameters
+BUILD_DIR=$1
+CACHE_DIR="${2}/${STACK}"
+
+# Setup profile file
+PROFILE_PATH="$BUILD_DIR/.profile.d/gdbm.sh"
+mkdir -p $(dirname $PROFILE_PATH)
+
+# Functions
+function indent() {
+  c='s/^/       /'
+  case $(uname) in
+    Darwin) sed -l "$c";;
+    *)      sed -u "$c";;
+  esac
+}
+
+function manifest_version() {
+  curl "http://${S3_BUCKET}.s3.amazonaws.com/${STACK}/manifest.${1}" -s -o - | head -n 1
+}
+
+function download_package() {
+  name="$1"
+  version="$2"
+  location="$3"
+
+  mkdir -p $location
+  package="https://${S3_BUCKET}.s3.amazonaws.com/${STACK}/$name-$version.tgz"
+  curl $package -s -o - | tar xzf - -C $location
+}
+
+function set-env (){
+  echo "export $1=$2" >> $PROFILE_PATH
+}
+
+function set-default-env (){
+  echo "export $1=\${$1:-$2}" >> $PROFILE_PATH
+}
+
+# Retrieve versions
+GDBM_VERSION=$(manifest_version "gdbm")
+
+# Display some information
+echo "Using gdbm version: ${GDBM_VERSION}" | indent
+
+# Vendor directories
+VENDORED_GDBM="vendor/gdbm/$GDBM_VERSION"
+
+# Make sure cache dir exists
+mkdir -p $CACHE_DIR
+
+if [ ! -d $CACHE_DIR/$VENDORED_GDBM ]; then
+  echo "-----> Fetching and vendoring gdbm"
+  rm -rf "$CACHE_DIR/vendor/gdbm"
+  download_package "gdbm" "${GDBM_VERSION}" "${CACHE_DIR}/${VENDORED_GDBM}"
+fi
+
+TARGET_VENDOR_DIR=".heroku/vendor"
+# Copy artifacts out of cache if exists.
+for dir in $VENDORED_GDBM; do
+  mkdir -p $BUILD_DIR/$TARGET_VENDOR_DIR
+  cp -r $CACHE_DIR/$dir/* $BUILD_DIR/$TARGET_VENDOR_DIR &> /dev/null || true
+done
+
+# App directories
+APP_VENDOR="/app/$TARGET_VENDOR_DIR"
+
+# Setup environment variables
+set-env GDBM_LIBRARY_PATH "$APP_VENDOR/lib"
+
+set-default-env LIBRARY_PATH "$APP_VENDOR/lib"
+set-default-env LD_LIBRARY_PATH "$APP_VENDOR/lib"
+set-default-env CPATH "$APP_VENDOR/include"
+
+echo "-----> Vendoring gdbm libraries done"
