@@ -75,6 +75,10 @@ TARGET_VENDOR_DIR=".heroku/vendor"
 for dir in $VENDORED_GDBM; do
   mkdir -p $BUILD_DIR/$TARGET_VENDOR_DIR
   cp -r $CACHE_DIR/$dir/* $BUILD_DIR/$TARGET_VENDOR_DIR &> /dev/null || true
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CACHE_DIR/$dir/lib
+  export LIBRARY_PATH=$LIBRARY_PATH:$CACHE_DIR/$dir/lib
+  export CPATH=$CPATH:$CACHE_DIR/$dir/include
+  export GDBM_LIBRARY_PATH=$GDBM_LIBRARY_PATH:$CACHE_DIR/$dir/lib
 done
 
 # App directories
