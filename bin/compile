@@ -56,7 +56,7 @@ function set-default-env (){
 GDBM_VERSION=$(manifest_version "gdbm")
 
 # Display some information
-echo "Using gdbm version: ${GDBM_VERSION}" | indent
+echo "Using gdbm version: ${GDBM_VERSION} on stack ${STACK}" | indent
 
 # Vendor directories
 VENDORED_GDBM="vendor/gdbm/$GDBM_VERSION"
