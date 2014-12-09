@@ -17,7 +17,7 @@ Example usage:
     $ heroku config:add BUILDPACK_URL=https://github.com/ddollar/heroku-buildpack-multi.git
 
     $ cat .buildpacks
-    https://github.com/StateAndPlain/heroku-gdbm-buildpack.git#v1
+    https://github.com/StateAndPlain/heroku-gdbm-buildpack.git#v3
     https://github.com/heroku/heroku-buildpack-ruby.git#v129
 
 
