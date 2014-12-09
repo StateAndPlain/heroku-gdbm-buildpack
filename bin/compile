@@ -17,6 +17,10 @@ S3_BUCKET=${HEROKU_GDBM_BUILDBACK_S3_BUCKET:-"stateandplain-gdbm-buildpack"}
 BUILD_DIR=$1
 CACHE_DIR="${2}/${STACK}"
 
+# Multi-buildpack subsequent buildpack exports
+BUILDPACK_DIR=$(dirname $BASH_SOURCE)
+BUILDPACK_EXPORT_PATH="$BUILDPACK_DIR/export"
+
 # Setup profile file
 PROFILE_PATH="$BUILD_DIR/.profile.d/gdbm.sh"
 mkdir -p $(dirname $PROFILE_PATH)
@@ -52,6 +56,10 @@ function set-default-env (){
   echo "export $1=\${$1:-$2}" >> $PROFILE_PATH
 }
 
+function set-buildpack-env (){
+  echo "export $1=$2" >> $BUILDPACK_EXPORT_PATH
+}
+
 # Retrieve versions
 GDBM_VERSION=$(manifest_version "gdbm")
 
@@ -75,10 +83,10 @@ TARGET_VENDOR_DIR=".heroku/vendor"
 for dir in $VENDORED_GDBM; do
   mkdir -p $BUILD_DIR/$TARGET_VENDOR_DIR
   cp -r $CACHE_DIR/$dir/* $BUILD_DIR/$TARGET_VENDOR_DIR &> /dev/null || true
-  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CACHE_DIR/$dir/lib
-  export LIBRARY_PATH=$LIBRARY_PATH:$CACHE_DIR/$dir/lib
-  export CPATH=$CPATH:$CACHE_DIR/$dir/include
-  export GDBM_LIBRARY_PATH=$GDBM_LIBRARY_PATH:$CACHE_DIR/$dir/lib
+  set-buildpack-env LD_LIBRARY_PATH \$LD_LIBRARY_PATH:$CACHE_DIR/$dir/lib
+  set-buildpack-env LIBRARY_PATH \$LIBRARY_PATH:$CACHE_DIR/$dir/lib
+  set-buildpack-env CPATH \$CPATH:$CACHE_DIR/$dir/include
+  set-buildpack-env GDBM_LIBRARY_PATH \$GDBM_LIBRARY_PATH:$CACHE_DIR/$dir/lib
 done
 
 # App directories
