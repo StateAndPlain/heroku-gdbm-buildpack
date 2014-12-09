@@ -18,7 +18,7 @@ BUILD_DIR=$1
 CACHE_DIR="${2}/${STACK}"
 
 # Multi-buildpack subsequent buildpack exports
-BUILDPACK_DIR=$(dirname $BASH_SOURCE)
+BUILDPACK_DIR=$(dirname $(dirname $BASH_SOURCE))
 BUILDPACK_EXPORT_PATH="$BUILDPACK_DIR/export"
 
 # Setup profile file
